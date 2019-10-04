@@ -17,38 +17,8 @@ module Koppen =
     /// Convert days to seconds
     let day2s (day: float<day>) = day * 84600.0<s/day>
 
-    type private Month = 
-        | January | February | March
-        | April   | May      | June
-        | July    | August   | September
-        | October | November | December
-
-    let private daysInMonth (month: Month) (daysInFebruary: float<day>) =
-        match month with
-        | February -> daysInFebruary
-        | April | June | September | November -> 30.0<day>
-        | _ -> 31.0<day>
-
     let private daysInMonths (daysInFebruary: float<day>) =
         [|31.0<day>; daysInFebruary; 31.0<day>; 30.0<day>; 31.0<day>; 30.0<day>; 31.0<day>; 31.0<day>; 30.0<day>; 31.0<day>; 30.0<day>; 31.0<day>|]
-
-    let private daysInMonthJulian (month: Month) (year: int) =
-        match month with
-        | February -> if year % 4 = 0 then 29.0<day> else 28.0<day>
-        | April | June | September | November -> 30.0<day>
-        | _ -> 31.0<day>
-
-    let private daysInMonthGregorian (month: Month) (year: int) =
-        match month with
-        | February -> if (year % 4 = 0 && (year % 400 = 0 || year % 100 <> 0)) then 29.0<day> else 28.0<day>
-        | April | June | September | November -> 30.0<day>
-        | _ -> 31.0<day>
-
-    let private daysInYearJulian (year: int) =
-        if year % 4 = 0 then 366.0<day> else 365.0<day>
-
-    let private daysInYearGregorian (year: int) =
-        if (year % 4 = 0 && (year % 400 = 0 || year % 100 <> 0)) then 366.0<day> else 365.0<day>
 
     let private annualMeanOf (vals: float<_>[]) (daysInFebruary: float<day>) = 
         (vals, (daysInMonths daysInFebruary)) 
