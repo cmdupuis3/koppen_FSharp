@@ -115,4 +115,4 @@ let myClimates = [myAf; myAm; myAw;
                   myDfa; myDfb; myDfc; myDfd;
                   myET; myEF]
 
-myClimates |> List.map (Koppen.Zones >> Option.get) |> List.map (string >> printf "%s\n")
+myClimates |> List.map (Koppen.Zones >> string >> printf "%s\n") |> ignore
