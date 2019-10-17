@@ -62,7 +62,7 @@ module Koppen =
                     Continental
 
     let private minor (clim: Climate) =
-        let numWarmMonths = clim.Temperature |> Array.fold (fun acc elem -> if elem > 10.0<C> then acc + 1 else acc) 0
+        let numWarmMonths = clim.Temperature |> Array.filter (fun x -> x > 10.0<C>) |> Array.length
         if numWarmMonths >= 4 then
             if Array.max clim.Temperature > 22.0<C> then Hot else Warm
         else
