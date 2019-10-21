@@ -91,5 +91,6 @@ koppen.toFS = function(t.file, t.name, p.file, p.name, latitude.name,
   #}
 
 }
+koppen.toFS = cmpfun(koppen.toFS)
 
 
