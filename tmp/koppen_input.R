@@ -11,12 +11,13 @@ setwd(root)
 # precipitation.file = nc_open("pr.nc")
 # t.name = "tasLut"
 # p.name = "pr"
+# lats.name = "lat"
 # 
 # start.year = 1951
 # end.year = 1980
 # reference.year = 1850
 # calendar = "365"
-# koppen.toFS(temperature.file, t.name, precipitation.file, p.name, 1951, 1980, 1850, "365")
+# koppen.toFS(temperature.file, t.name, precipitation.file, p.name, lats.name, 1951, 1980, 1850, "365")
 
 
 days.in.February = function(year, calendar = "Gregorian"){
@@ -58,9 +59,10 @@ climatology = function(x, start.year, calendar = "Gregorian"){
   
 }
 
-koppen.toFS = function(t.file, t.name, p.file, p.name, start.year, end.year, reference.year, calendar = "Gregorian"){
+koppen.toFS = function(t.file, t.name, p.file, p.name, latitude.name,
+                       start.year, end.year, reference.year, calendar = "Gregorian"){
 
-  lats = ncvar_get(temperature.file, "lat")
+  lats = ncvar_get(t.file, "lat")
   hemisphere = apply(lats, c(1), function(x) { if (x >= 0) 'Northern' else 'Southern' } )
   
   #write.columns = function(data) {
@@ -70,7 +72,7 @@ koppen.toFS = function(t.file, t.name, p.file, p.name, start.year, end.year, ref
         t = ncvar_get(t.file, t.name,
                       start = c(i,j,12*(start.year-reference.year - 1) + 1),
                       count = c(1,1,12*(end.year-start.year + 1)))
-        if(!is.na(tasLut[1])){
+        if(!is.na(t[1])){
           p = ncvar_get(p.file, p.name,
                         start = c(i,j,12*(start.year-reference.year) + 1),
                         count = c(1,1,12*(end.year-start.year + 1)))
