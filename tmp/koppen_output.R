@@ -8,7 +8,7 @@ koppen.zones = c("Af", "Am", "Aw",
                  "Cfa", "Cfb", "Cfc",
                  "Dsa", "Dsb", "Dsc", "Dsd",
                  "Dwa", "Dwb", "Dwc", "Dwd",
-                 "Dfa", "Dfb", "Dfc", "Dfc",
+                 "Dfa", "Dfb", "Dfc", "Dfd",
                  "ET", "EF")
 koppen.colors = c("#0000FF", "#0078FF", "#46AAFA", 
                   "#FF0000", "#FF9696", "#F5A500", "#FFDC64",
