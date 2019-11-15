@@ -46,4 +46,4 @@ let readKoppen imax jmax (timer: System.Diagnostics.Stopwatch) =
 
 let koppenTimer = System.Diagnostics.Stopwatch.StartNew()
 readKoppen imax jmax koppenTimer
-printfn "%i\n" koppenTimer.ElapsedMilliseconds
+printfn "%i ms\n" koppenTimer.ElapsedMilliseconds
