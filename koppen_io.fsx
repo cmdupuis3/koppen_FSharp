@@ -27,8 +27,8 @@ let readKoppen imax jmax (timer: System.Diagnostics.Stopwatch) =
 
                 let daysInFebruary = (file.Rows |> Seq.head).DaysInFebruary * 1.0<day>
                 let hemisphere = (file.Rows |> Seq.head).Hemisphere |> function | "Northern" -> Koppen.Northern | "Southern" -> Koppen.Southern | _ -> failwith "fail"
-                let temperature =   file.Rows |> Seq.map (fun x -> x.Temperature)   |> Seq.map (float >> (*) 1.0<C>) |> Seq.toArray
-                let precipitation = file.Rows |> Seq.map (fun x -> x.Precipitation) |> Seq.map (float >> (*) 1.0<mm>) |> Seq.toArray
+                let temperature =   file.Rows |> Seq.map ((fun x -> x.Temperature)   >> float >> (*) 1.0<C>) |> Seq.toArray
+                let precipitation = file.Rows |> Seq.map ((fun x -> x.Precipitation) >> float >> (*) 1.0<mm>) |> Seq.toArray
 
                 let clim = Koppen.Climate (daysInFebruary, hemisphere, temperature, precipitation)
                 timer.Start()
