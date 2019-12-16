@@ -1,5 +1,6 @@
 
 koppen.file = as.matrix(read.csv("koppen.out", sep = "\t", header = FALSE))
+koppen.empirical.file = as.matrix(read.csv("koppen_empirical.out", sep = "\t", header = FALSE))
 
 koppen.zones = c("Af", "Am", "Aw", 
                  "BWh", "BWk", "BSh", "BSk",
@@ -10,6 +11,14 @@ koppen.zones = c("Af", "Am", "Aw",
                  "Dwa", "Dwb", "Dwc", "Dwd",
                  "Dfa", "Dfb", "Dfc", "Dfd",
                  "ET", "EF")
+
+koppen.masks           = array(NA, dim = c(length(koppen.zones), dim(koppen.file)))
+koppen.empirical.masks = array(NA, dim = c(length(koppen.zones), dim(koppen.empirical.file)))
+for(i in 1:length(koppen.zones)){
+  koppen.masks[i,,]           = apply(koppen.file,           c(1,2), function(x) {x == koppen.zones[i]})
+  koppen.empirical.masks[i,,] = apply(koppen.empirical.file, c(1,2), function(x) {x == koppen.zones[i]})
+}
+
 koppen.colors = c("#0000FF", "#0078FF", "#46AAFA", 
                   "#FF0000", "#FF9696", "#F5A500", "#FFDC64",
                   "#FFFF00", "#C6C700", "#969600",
@@ -20,10 +29,5 @@ koppen.colors = c("#0000FF", "#0078FF", "#46AAFA",
                   "#00FFFF", "#38C7FF", "#007E7D", "#00455E",
                   "#B2B2B2", "#686868")
 
-koppen.masks = array(NA, dim = c(length(koppen.zones), dim(koppen.file)))
-for(i in 1:length(koppen.zones)){
-  koppen.masks[i,,] = apply(koppen.file, c(1,2), function(x) {x == koppen.zones[i]})
-}
-
-koppen.map = apply(koppen.file, c(1,2), function(x) {match(x, koppen.zones)})
-filled.contour(koppen.map, col = koppen.colors, nlevels = length(koppen.colors))
+koppen.map           = apply(koppen.file,           c(1,2), function(x) {match(x, koppen.zones)})
+koppen.empirical.map = apply(koppen.empirical.file, c(1,2), function(x) {match(x, koppen.zones)})
