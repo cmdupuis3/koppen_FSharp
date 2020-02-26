@@ -7,10 +7,10 @@ open System.IO
 open FSharp.Data
 
 
-type KoppenFile = CsvProvider<"/local/home/landproj/CMIP6_historical/tmp2/100_135.csv",
+type KoppenFile = CsvProvider<"/local/home/landproj/CMIP6_historical/koppen_ESM4hist/100_135.csv",
                               HasHeaders = true,
                               Schema = "float, string, float, float">
-let file = KoppenFile.Load("/local/home/landproj/CMIP6_historical/tmp2/100_135.csv")
+let file = KoppenFile.Load("/local/home/landproj/CMIP6_historical/koppen_ESM4hist/100_135.csv")
 
 let imax = 360
 let jmax = 180
@@ -19,7 +19,7 @@ let readKoppen imax jmax (timer: System.Diagnostics.Stopwatch) =
 
     let rec readKoppenCol i imax jmax (timer: System.Diagnostics.Stopwatch) =
         let rec readKoppenRow i j jmax (timer: System.Diagnostics.Stopwatch) =
-            let fname = String.concat "" ["/local/home/landproj/CMIP6_historical/tmp2/"; string i; "_"; string j; ".csv"]
+            let fname = String.concat "" ["/local/home/landproj/CMIP6_historical/koppen_ESM4hist/"; string i; "_"; string j; ".csv"]
             if not(File.Exists fname) then
                 if j = jmax then [None] else None :: (readKoppenRow i (j+1) jmax timer)
             else
@@ -41,7 +41,7 @@ let readKoppen imax jmax (timer: System.Diagnostics.Stopwatch) =
     readKoppenCol 1 imax jmax timer
     |> List.map (fun x -> x |> List.map (fun (y: Koppen.Zone Option) -> if y.IsNone then "NA\t" else y |> (Option.get >> string >> fun z -> String.concat "" [z; "\t"])))
     |> List.map (fun x -> x |> List.fold (fun acc elem -> String.concat "" [acc; elem]) "" )
-    |> fun x -> File.WriteAllLines (@"/local/home/landproj/CMIP6_historical/koppen_empirical.out", x)
+    |> fun x -> File.WriteAllLines (@"/local/home/landproj/CMIP6_historical/koppen_ESM4hist.out", x)
 
 
 let koppenTimer = System.Diagnostics.Stopwatch.StartNew()
