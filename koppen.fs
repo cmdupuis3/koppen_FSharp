@@ -101,7 +101,7 @@ module Koppen =
             if Array.min clim.Precipitation >= a then Am else Aw
 
     let private MatchPolar (clim: Climate) =
-        if Array.max clim.Temperature < 0.0<C> then EF else ET
+        if Array.max clim.Temperature < -3.0<C> then EF else ET
 
     let private MatchTemperate (clim: Climate) =
         match precip clim, minor clim with
