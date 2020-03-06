@@ -140,3 +140,63 @@ module Koppen =
             | Temperate   -> clim |> MatchTemperate
             | Continental -> clim |> MatchContinental
             | Polar       -> clim |> MatchPolar
+
+
+    let private allA = [Af; Am; Aw]
+
+    let private allC =
+        [
+            Csa; Csb; Csc;
+            Cfa; Cfb; Cfc;
+            Cwa; Cwb; Cwc
+        ]
+
+    let private allD =
+        [
+            Dsa; Dsb; Dsc; Dsd;
+            Dfa; Dfb; Dfc; Dfd;
+            Dwa; Dwb; Dwc; Dwd;
+        ]
+
+    /// List of all valid Koppen zone transitions, given as a zone and its neighbors.
+    let TransitionList =
+        [
+            Af, [Am; Aw; BSh] @ allC;
+            Am, [Af; Aw; BSh] @ allC;
+            Aw, [Af; Am; BSh] @ allC;
+            BWh, [BSh; BWk];
+            BWk, [BSk; BWh];
+            BSh, allA @ [BWh; BSk] @ allC;
+            BSk, [BSh; BWk] @ allD @ [ET];
+
+            Csa, allA @ [BSh; Dsa; Csb; Cfa];
+            Csb, allA @ [BSh; Dsb; Csa; Csc; Cfb];
+            Csc, allA @ [BSh; Dsc; Csb; Cfc]            @ [ET];
+            Cfa, allA @ [BSh; Dfa; Csa; Cwa; Cfb];
+            Cfb, allA @ [BSh; Dfb; Csb; Cwb; Cfa; Cfc];
+            Cfc, allA @ [BSh; Dfc; Csc; Cwc; Cfb]       @ [ET];
+            Cwa, allA @ [BSh; Dwa; Cwb; Cfa];
+            Cwb, allA @ [BSh; Dwb; Cfb; Cwa; Cwc];
+            Cwc, allA @ [BSh; Dwc; Cfc; Cwb]            @ [ET];
+
+            Dsa, [BSk; Csa; Dsb; Dfa]
+            Dsb, [BSk; Csb; Dsa; Dsc; Dfb];
+            Dsc, [BSk; Csc; Dsb; Dsd; Dfc]              @ [ET];
+            Dsd, [BSk;      Dsc; Dfd]                   @ [ET];
+            Dfa, [BSk; Cfa; Dsa; Dwa; Dfb];
+            Dfb, [BSk; Cfb; Dsb; Dwb; Dfa; Dfc];
+            Dfc, [BSk; Cfc; Dsc; Dwc; Dfb; Dfd]         @ [ET];
+            Dfd, [BSk;      Dsd; Dwd; Dfc]              @ [ET];
+            Dwa, [BSk; Cwa; Dwb; Dfa];
+            Dwb, [BSk; Cwb; Dfb; Dwa; Dwc];
+            Dwc, [BSk; Cwc; Dfc; Dwb; Dwd]              @ [ET];
+            Dwd, [BSk;      Dfd; Dwc]                   @ [ET];
+
+            ET, [Csc; Cfc; Cwc; Dsc; Dsd; Dfc; Dfd; Dwc; Dwd; EF];
+            EF, [ET]
+        ]
+
+    let Transitions (zone: Zone) =
+        TransitionList
+        |> List.find (fun x -> fst x = zone)
+        |> snd
