@@ -200,3 +200,67 @@ module Koppen =
         TransitionList
         |> List.find (fun x -> fst x = zone)
         |> snd
+
+
+    type private Halo(north: 'a, east: 'a, south: 'a, west: 'a) =
+        member this.North = north
+        member this.East = east
+        member this.South = south
+        member this.West = west
+
+    /// Halo for a regular grid wrapped horizontally
+    let private halo i j (grid: 'a list list) =
+
+        let east =
+            if i = grid.Length - 1 then 0 else i + 1
+            |> fun x -> grid.[x].[j]
+        let west =
+            if i = 0 then grid.Length - 1 else i - 1
+            |> fun x -> grid.[x].[j]
+        let north = if j = grid.[i].Length - 1 then None else grid.[i].[j+1]
+        let south = if j = 0 then None else grid.[i].[j-1]
+
+        Halo(north, east, south, west)
+
+    let countTransitions (grid: 'a list list) =
+        let transitions =
+            List.init grid.Length (fun i ->
+                List.init grid.[i].Length (fun j ->
+                    match grid.[i].[j] with
+                    | None   -> []
+                    | Some k ->
+                        grid
+                        |> halo i j
+                        |> fun x -> [x.North; x.East; x.South; x.West]
+                        |> List.filter (fun x -> x.IsSome)
+                        |> List.map (Option.get >> (fun x -> k, x))
+                )
+            )
+            |> List.reduce (@)
+            |> List.reduce (@)
+
+        let transitionIndex zone1 zone2 =
+            let first =
+                TransitionList
+                |> List.findIndex (fun x -> fst x = zone1)
+            let second =
+                TransitionList.[first]
+                |> snd
+                |> List.findIndex (fun x -> x = zone2)
+            first, second
+
+        // Initialize transition buckets to zero
+        let buckets =
+            Array.init TransitionList.Length (fun i ->
+                Array.init (TransitionList.[i] |> snd |> List.length) (fun j ->
+                    0
+                )
+            )
+
+        let coords =
+            transitions
+            |> List.map (fun x -> transitionIndex (fst x) (snd x))
+
+        for i, j in coords do
+            buckets.[i].[j] <- buckets.[i].[j] + 1
+        buckets
