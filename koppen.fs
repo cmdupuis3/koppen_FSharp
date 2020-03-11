@@ -158,6 +158,8 @@ module Koppen =
             Dwa; Dwb; Dwc; Dwd;
         ]
 
+    let ZoneList = allA @ [BWh; BWk; BSh; BSk] @ allC @ allD @ [ET; EF]
+
     /// List of all valid Koppen zone transitions, given as a zone and its neighbors.
     let TransitionList =
         [
@@ -223,7 +225,7 @@ module Koppen =
 
         Halo(north, east, south, west)
 
-    let CountTransitions (grid: 'a list list) =
+    let private countTransitions (grid: 'a list list) =
         let transitions =
             List.init grid.Length (fun i ->
                 List.init grid.[i].Length (fun j ->
@@ -271,19 +273,79 @@ module Koppen =
             buckets.[i].[j] <- buckets.[i].[j] + 1
         buckets
 
-    let Graph (offset: int) (grid: 'a list list) =
-        let weights =
-            CountTransitions grid
+    let private graphWeights (offset: int) (grid: 'a list list) =
+        countTransitions grid
+        |> Array.toList
+        |> List.map (fun x ->
+            x
             |> Array.toList
-            |> List.map (fun x ->
-                x
-                |> Array.toList
-                |> List.map (fun y ->
-                    offset - y
-                )
+            |> List.map (fun y ->
+                offset - y
             )
+        )
 
-        (TransitionList |> List.map snd, weights)
+    let Graph (offset: int) (grid: 'a list list) =
+        (TransitionList |> List.map snd, graphWeights offset grid)
         ||> List.map2 List.zip
         |> fun x -> (TransitionList |> List.map fst, x)
         ||> List.zip
+
+    let GraphAsMap (offset: int) (grid: 'a list list) =
+        let keys =
+            Graph offset grid
+            |> List.map (fun x ->
+                snd x
+                |> List.map (fun y ->
+                    fst x, fst y
+                )
+            )
+
+        (keys, graphWeights offset grid)
+        ||> List.map2 List.zip
+        |> List.reduce (@)
+        |> Map.ofList
+
+    //Dijkstra's algorithm: Nigel Galloway, August 5th., 2018
+    // from https://rosettacode.org/wiki/Dijkstra%27s_algorithm#F.23
+    [<CustomEquality;CustomComparison>]
+    type private Dijkstra<'N, 'G when 'G:comparison>
+        = {toN: 'N; cost: Option<'G>; fromN: 'N}
+            override g.Equals n =
+                match n with
+                | :? Dijkstra<'N,'G> as n -> n.cost = g.cost
+                | _ -> false
+            override g.GetHashCode() = hash g.cost
+            interface System.IComparable with
+                member n.CompareTo g =
+                    match g with
+                    | :? Dijkstra<'N,'G> as n when n.cost = None -> (-1)
+                    | :? Dijkstra<'N,'G>      when n.cost = None -> 1
+                    | :? Dijkstra<'N,'G> as g                    -> compare n.cost g.cost
+                    | _-> invalidArg "n" "expecting type Dijkstra<'N,'G>"
+
+    // from https://rosettacode.org/wiki/Dijkstra%27s_algorithm#F.23
+    let inline private Dijkstra N G y =
+        let rec fN l f =
+            if List.isEmpty l then f else
+                let n = List.min l
+                if n.cost=None then f else
+                fN (l |> List.choose (fun n' ->
+                    if n'.toN=n.toN then None else
+                    match n.cost, n'.cost, Map.tryFind (n.toN,n'.toN) G with
+                    | Some g, None,    Some wg                  -> Some {toN = n'.toN; cost = Some(g+wg); fromN = n.toN}
+                    | Some g, Some g', Some wg when g + wg < g' -> Some {toN = n'.toN; cost = Some(g+wg); fromN = n.toN}
+                    | _                                         -> Some n'))
+                    ((n.fromN, n.toN) :: f)
+
+        let r = fN (N |> List.map (fun n -> {toN = n; cost = (Map.tryFind (y,n) G); fromN = y})) []
+        (fun n ->
+            let rec fN z l =
+                match List.tryFind (fun (_,g) -> g = z) r with
+                | Some (n', g') when y = n'-> Some (n' :: g' :: l)
+                | Some (n', g')            -> fN n' (g' :: l)
+                | _                        -> None
+            fN n [])
+
+    let Paths (offset: int) (grid: 'a list list) =
+        Dijkstra ZoneList (GraphAsMap offset grid)
+
