@@ -270,3 +270,20 @@ module Koppen =
         for i, j in coords do
             buckets.[i].[j] <- buckets.[i].[j] + 1
         buckets
+
+    let Graph (offset: int) (grid: 'a list list) =
+        let weights =
+            CountTransitions grid
+            |> Array.toList
+            |> List.map (fun x ->
+                x
+                |> Array.toList
+                |> List.map (fun y ->
+                    offset - y
+                )
+            )
+
+        (TransitionList |> List.map snd, weights)
+        ||> List.map2 List.zip
+        |> fun x -> (TransitionList |> List.map fst, x)
+        ||> List.zip
