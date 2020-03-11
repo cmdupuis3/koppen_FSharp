@@ -164,6 +164,7 @@ module Koppen =
             Af, [Am; Aw; BSh] @ allC;
             Am, [Af; Aw; BSh] @ allC;
             Aw, [Af; Am; BSh] @ allC;
+
             BWh, [BSh; BWk];
             BWk, [BSk; BWh];
             BSh, allA @ [BWh; BSk] @ allC;
@@ -222,7 +223,7 @@ module Koppen =
 
         Halo(north, east, south, west)
 
-    let countTransitions (grid: 'a list list) =
+    let CountTransitions (grid: 'a list list) =
         let transitions =
             List.init grid.Length (fun i ->
                 List.init grid.[i].Length (fun j ->
@@ -234,11 +235,13 @@ module Koppen =
                         |> fun x -> [x.North; x.East; x.South; x.West]
                         |> List.filter (fun x -> x.IsSome)
                         |> List.map (Option.get >> (fun x -> k, x))
+                        |> List.filter (fun x -> fst x <> snd x)
                 )
             )
             |> List.reduce (@)
             |> List.reduce (@)
 
+        // If there is a valid transition, return the transition indices
         let transitionIndex zone1 zone2 =
             let first =
                 TransitionList
@@ -246,8 +249,10 @@ module Koppen =
             let second =
                 TransitionList.[first]
                 |> snd
-                |> List.findIndex (fun x -> x = zone2)
-            first, second
+                |> List.tryFindIndex (fun x -> x = zone2)
+            match second with
+            | None -> None
+            | Some j -> Some (first, j)
 
         // Initialize transition buckets to zero
         let buckets =
@@ -260,6 +265,7 @@ module Koppen =
         let coords =
             transitions
             |> List.map (fun x -> transitionIndex (fst x) (snd x))
+            |> List.choose id
 
         for i, j in coords do
             buckets.[i].[j] <- buckets.[i].[j] + 1
