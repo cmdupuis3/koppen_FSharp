@@ -273,34 +273,32 @@ module Koppen =
             buckets.[i].[j] <- buckets.[i].[j] + 1
         buckets
 
-    let private graphWeights (offset: int) (grid: 'a list list) =
+    let private graphWeights (cost: int -> float) (grid: 'a list list) =
         countTransitions grid
         |> Array.toList
         |> List.map (fun x ->
             x
             |> Array.toList
-            |> List.map (fun y ->
-                offset - y
-            )
+            |> List.map cost
         )
 
-    let Graph (offset: int) (grid: 'a list list) =
-        (TransitionList |> List.map snd, graphWeights offset grid)
+    let Graph (cost: int -> float) (grid: 'a list list) =
+        (TransitionList |> List.map snd, graphWeights cost grid)
         ||> List.map2 List.zip
         |> fun x -> (TransitionList |> List.map fst, x)
         ||> List.zip
 
-    let GraphAsMap (offset: int) (grid: 'a list list) =
-        let keys =
-            Graph offset grid
-            |> List.map (fun x ->
-                snd x
-                |> List.map (fun y ->
-                    fst x, fst y
-                )
+    let private graphKeys (cost: int -> float) (grid: 'a list list) =
+        Graph cost grid
+        |> List.map (fun x ->
+            snd x
+            |> List.map (fun y ->
+                fst x, fst y
             )
+        )
 
-        (keys, graphWeights offset grid)
+    let GraphAsMap (cost: int -> float) (grid: 'a list list) =
+        (graphKeys cost grid, graphWeights cost grid)
         ||> List.map2 List.zip
         |> List.reduce (@)
         |> Map.ofList
@@ -346,6 +344,34 @@ module Koppen =
                 | _                        -> None
             fN n [])
 
-    let Paths (offset: int) (grid: 'a list list) =
-        Dijkstra ZoneList (GraphAsMap offset grid)
+    let private dictionary cost grid func =
+        let keys = graphKeys cost grid |> List.reduce (@)
+        let vals = keys |> List.map (fun x -> func cost grid (fst x) (snd x))
+        (keys, vals)
+        ||> List.zip
+
+    let Paths (cost: int -> float) (grid: 'a list list) =
+        Dijkstra ZoneList (GraphAsMap cost grid)
+
+    let PathDictionary (cost: int -> float) (grid: 'a list list) =
+        Paths |> dictionary cost grid
+
+    let Distance (cost: int -> float) (grid: 'a list list) zone1 zone2
+        (pathDictionary: ((Zone * Zone) * Zone list Option) list)=
+        let map = GraphAsMap cost grid
+
+        pathDictionary
+        |> List.find (fun x -> fst x = (zone1, zone2))
+        |> snd
+        |> function
+            | None -> infinity
+            | Some path ->
+                List.init (path.Length-1) (fun i ->
+                    map |> Map.find (path.[i], path.[i+1])
+                )
+                |> List.reduce (+)
+
+    let DistanceDictionary (cost: int -> float) (grid: 'a list list) =
+        (fun a b c d -> Distance a b c d (PathDictionary cost grid))
+        |> dictionary cost grid
 
