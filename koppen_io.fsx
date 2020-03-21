@@ -1,5 +1,5 @@
 
-#I @"/home/c1d/.nuget/packages/fsharp.data/3.3.2/lib/net45/"
+#I @"C:/Users/username/.nuget/packages/fsharp.data/3.3.2/lib/net45"
 #r @"FSharp.Data.dll"
 #load @"koppen.fs"
 open Koppen
@@ -7,10 +7,10 @@ open System.IO
 open FSharp.Data
 
 
-type KoppenFile = CsvProvider<"/local/home/landproj/CMIP6_historical/koppen_ESM4hist/100_135.csv",
+type KoppenFile = CsvProvider<"C:/Users/username/Documents/koppen_empirical/100_135.csv",
                               HasHeaders = true,
                               Schema = "float, string, float, float">
-let file = KoppenFile.Load("/local/home/landproj/CMIP6_historical/koppen_ESM4hist/100_135.csv")
+let file = KoppenFile.Load("C:/Users/username/Documents/koppen_empirical/100_135.csv")
 
 let imax = 360
 let jmax = 180
@@ -19,7 +19,7 @@ let readKoppen imax jmax (timer: System.Diagnostics.Stopwatch) =
 
     let rec readKoppenCol i imax jmax (timer: System.Diagnostics.Stopwatch) =
         let rec readKoppenRow i j jmax (timer: System.Diagnostics.Stopwatch) =
-            let fname = String.concat "" ["/local/home/landproj/CMIP6_historical/koppen_ESM4hist/"; string i; "_"; string j; ".csv"]
+            let fname = String.concat "" ["C:/Users/username/Documents/koppen_empirical/"; string i; "_"; string j; ".csv"]
             if not(File.Exists fname) then
                 if j = jmax then [None] else None :: (readKoppenRow i (j+1) jmax timer)
             else
@@ -39,11 +39,29 @@ let readKoppen imax jmax (timer: System.Diagnostics.Stopwatch) =
         if i = imax then [row] else row :: (readKoppenCol (i+1) imax jmax timer)
 
     readKoppenCol 1 imax jmax timer
+
+let writeKoppen x =
+    x
     |> List.map (fun x -> x |> List.map (fun (y: Koppen.Zone Option) -> if y.IsNone then "NA\t" else y |> (Option.get >> string >> fun z -> String.concat "" [z; "\t"])))
     |> List.map (fun x -> x |> List.fold (fun acc elem -> String.concat "" [acc; elem]) "" )
-    |> fun x -> File.WriteAllLines (@"/local/home/landproj/CMIP6_historical/koppen_ESM4hist.out", x)
+    |> fun x -> File.WriteAllLines (@"C:/Users/username/Documents/koppen_empirical/koppen_ESM4hist.out", x)
 
 
 let koppenTimer = System.Diagnostics.Stopwatch.StartNew()
-readKoppen imax jmax koppenTimer
+let grid = readKoppen imax jmax koppenTimer
 printfn "%i ms\n" koppenTimer.ElapsedMilliseconds
+let costf = fun x -> 1000.0 / (float x)
+
+let paths = Koppen.PathDictionary costf grid
+
+let asfdfa = Koppen.Distance costf grid Koppen.EF Koppen.Aw paths
+let asdffa = Koppen.Distance costf grid Koppen.Dwc Koppen.Aw paths
+let fdsfas = Koppen.Distance costf grid Koppen.Cfa Koppen.Aw paths
+let fsdssf = Koppen.Distance costf grid Koppen.BSh Koppen.Aw paths
+
+let timer = System.Diagnostics.Stopwatch.StartNew()
+timer.Start()
+let dists = Koppen.DistanceDictionary costf grid
+timer.Stop()
+printfn "%i ms\n" timer.ElapsedMilliseconds
+
