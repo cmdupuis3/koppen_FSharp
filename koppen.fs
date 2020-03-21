@@ -354,17 +354,9 @@ module Koppen =
                     printf "%i    %i\n" i j
                     (ZoneList.[i], ZoneList.[j])))
             |> List.reduce (@)
-        printfn "keys length: %i\n" keys.Length
-
-        let timer = System.Diagnostics.Stopwatch.StartNew()
-        timer.Start()
         let vals =
             keys
             |> List.map (fun x -> func (fst x) (snd x))
-        timer.Stop()
-        printfn "%i s\n" timer.ElapsedMilliseconds
-
-        printfn "%s\n" "here2"
         (keys, vals)
         ||> List.zip
 
