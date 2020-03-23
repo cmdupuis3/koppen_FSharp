@@ -351,7 +351,6 @@ module Koppen =
         let keys =
             List.init ZoneList.Length (fun i ->
                 List.init ZoneList.Length (fun j ->
-                    printf "%i    %i\n" i j
                     (ZoneList.[i], ZoneList.[j])))
             |> List.reduce (@)
         let vals =
