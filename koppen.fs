@@ -386,16 +386,21 @@ module Koppen =
         |> dictionary
 
     let Difference (cost: int list -> float list) (grid1: Zone Option list list) (grid2: Zone Option list list) =
-        let distanceDictionary = DistanceDictionary cost grid1
+        let pathDictionary = PathDictionary cost grid1
+        //let distanceDictionary = DistanceDictionary cost grid1
         List.init grid1.Length (fun i ->
             List.init grid1.Head.Length (fun j ->
                 match grid1.[i].[j], grid2.[i].[j] with
                 | None, None -> None
                 | Some zone1, Some zone2 ->
-                    distanceDictionary
-                    |> List.find (fun ((x, y), z) -> (x, y) = (zone1, zone2))
-                    |> snd
-                    |> Some
+                    if zone1 = zone2 then Some 0.0 else
+                        pathDictionary
+                        |> List.find (fun ((x, y), z) -> (x, y) = (zone1, zone2))
+                        |> snd
+                        |> Option.get
+                        |> List.length
+                        |> float
+                        |> Some
                 | _, _ -> failwith "Grids don't match"
             )
         )
