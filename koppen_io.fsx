@@ -15,11 +15,11 @@ let file = KoppenFile.Load("C:/Users/username/Documents/koppen_empirical/100_135
 let imax = 360
 let jmax = 180
 
-let readKoppen imax jmax (timer: System.Diagnostics.Stopwatch) =
+let readKoppen imax jmax (timer: System.Diagnostics.Stopwatch) name =
 
     let rec readKoppenCol i imax jmax (timer: System.Diagnostics.Stopwatch) =
         let rec readKoppenRow i j jmax (timer: System.Diagnostics.Stopwatch) =
-            let fname = String.concat "" ["C:/Users/username/Documents/koppen_empirical/"; string i; "_"; string j; ".csv"]
+            let fname = String.concat "" ["C:/Users/username/Documents/koppen_"; name; "/"; string i; "_"; string j; ".csv"]
             if not(File.Exists fname) then
                 if j = jmax then [None] else None :: (readKoppenRow i (j+1) jmax timer)
             else
@@ -40,28 +40,35 @@ let readKoppen imax jmax (timer: System.Diagnostics.Stopwatch) =
 
     readKoppenCol 1 imax jmax timer
 
-let writeKoppen x =
+let writeKoppen name x =
     x
     |> List.map (fun x -> x |> List.map (fun (y: Koppen.Zone Option) -> if y.IsNone then "NA\t" else y |> (Option.get >> string >> fun z -> String.concat "" [z; "\t"])))
     |> List.map (fun x -> x |> List.fold (fun acc elem -> String.concat "" [acc; elem]) "" )
-    |> fun x -> File.WriteAllLines (@"C:/Users/username/Documents/koppen_empirical/koppen_ESM4hist.out", x)
+    |> fun x -> File.WriteAllLines (String.concat "" ["C:/Users/username/Documents/koppen_"; name; "/koppen_"; name; ".out"], x)
 
 
 let koppenTimer = System.Diagnostics.Stopwatch.StartNew()
-let grid = readKoppen imax jmax koppenTimer
+let grid1 = readKoppen imax jmax koppenTimer "ESM4hist"
+let grid2 = readKoppen imax jmax koppenTimer "ESM4hist2"
 printfn "%i ms\n" koppenTimer.ElapsedMilliseconds
-let costf = fun x -> 1000.0 / (float x)
+//writeKoppen grid1
+//writeKoppen grid2
 
-let paths = Koppen.PathDictionary costf grid
+let costf = fun x ->
+    let sum = List.sumBy float x
+    x |> List.map (fun y -> 1.0)
 
-let asfdfa = Koppen.Distance costf grid Koppen.EF Koppen.Aw paths
-let asdffa = Koppen.Distance costf grid Koppen.Dwc Koppen.Aw paths
-let fdsfas = Koppen.Distance costf grid Koppen.Cfa Koppen.Aw paths
-let fsdssf = Koppen.Distance costf grid Koppen.BSh Koppen.Aw paths
+let paths = Koppen.PathDictionary costf grid1
+
+let asfdfa = Koppen.Distance costf grid1 Koppen.EF Koppen.Aw paths
+let asdffa = Koppen.Distance costf grid1 Koppen.Dwc Koppen.Aw paths
+let fdsfas = Koppen.Distance costf grid1 Koppen.Cfa Koppen.Aw paths
+let fsdssf = Koppen.Distance costf grid1 Koppen.BSh Koppen.Aw paths
+let fsdssf = Koppen.Distance costf grid1 Koppen.Aw Koppen.Aw paths
 
 let timer = System.Diagnostics.Stopwatch.StartNew()
 timer.Start()
-let dists = Koppen.DistanceDictionary costf grid
+let dists = Koppen.DistanceDictionary costf grid1
 timer.Stop()
 printfn "%i ms\n" timer.ElapsedMilliseconds
-
+ 
