@@ -56,7 +56,7 @@ printfn "%i ms\n" koppenTimer.ElapsedMilliseconds
 
 let costf = fun x ->
     let sum = List.sumBy float x
-    x |> List.map (fun y -> 1.0)
+    x |> List.map (fun y -> 1000.0 / (float y) / sum)
 
 let paths = Koppen.PathDictionary costf grid1
 
@@ -64,11 +64,25 @@ let asfdfa = Koppen.Distance costf grid1 Koppen.EF Koppen.Aw paths
 let asdffa = Koppen.Distance costf grid1 Koppen.Dwc Koppen.Aw paths
 let fdsfas = Koppen.Distance costf grid1 Koppen.Cfa Koppen.Aw paths
 let fsdssf = Koppen.Distance costf grid1 Koppen.BSh Koppen.Aw paths
-let fsdssf = Koppen.Distance costf grid1 Koppen.Aw Koppen.Aw paths
+let asdfds = Koppen.Distance costf grid1 Koppen.Aw Koppen.Aw paths
 
 let timer = System.Diagnostics.Stopwatch.StartNew()
 timer.Start()
 let dists = Koppen.DistanceDictionary costf grid1
 timer.Stop()
 printfn "%i ms\n" timer.ElapsedMilliseconds
- 
+
+
+let timer = System.Diagnostics.Stopwatch.StartNew()
+timer.Start()
+let diffs = Koppen.Difference costf grid1 grid2
+timer.Stop()
+printfn "%i ms\n" timer.ElapsedMilliseconds
+
+let writeDiffs x =
+    x
+    |> List.map (fun x -> x |> List.map (fun (y: float Option) -> if y.IsNone then "NA," else y |> (Option.get >> string >> fun z -> String.concat "" [z; ","])))
+    |> List.map (fun x -> x |> List.fold (fun acc elem -> String.concat "" [acc; elem]) "" )
+    |> fun x -> File.WriteAllLines ("C:/Users/username/Documents/koppen_difference.out", x)
+
+writeDiffs diffs
