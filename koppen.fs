@@ -275,22 +275,18 @@ module Koppen =
             buckets.[i].[j] <- buckets.[i].[j] + 1
         buckets
 
-    let private graphWeights (cost: int -> float) (grid: 'a list list) =
+    let private graphWeights (cost: int list -> float list) (grid: 'a list list) =
         countTransitions grid
         |> Array.toList
-        |> List.map (fun x ->
-            x
-            |> Array.toList
-            |> List.map cost
-        )
+        |> List.map (Array.toList >> cost)
 
-    let Graph (cost: int -> float) (grid: 'a list list) =
+    let Graph (cost: int list -> float list) (grid: 'a list list) =
         (TransitionList |> List.map snd, graphWeights cost grid)
         ||> List.map2 List.zip
         |> fun x -> (TransitionList |> List.map fst, x)
         ||> List.zip
 
-    let private graphKeys (cost: int -> float) (grid: 'a list list) =
+    let private graphKeys (cost: int list -> float list) (grid: 'a list list) =
         Graph cost grid
         |> List.map (fun x ->
             snd x
@@ -299,7 +295,7 @@ module Koppen =
             )
         )
 
-    let GraphAsMap (cost: int -> float) (grid: 'a list list) =
+    let GraphAsMap (cost: int list -> float list) (grid: 'a list list) =
         (graphKeys cost grid, graphWeights cost grid)
         ||> List.map2 List.zip
         |> List.reduce (@)
@@ -360,15 +356,15 @@ module Koppen =
         ||> List.zip
 
 
-    let Paths (cost: int -> float) (grid: 'a list list) =
+    let Paths (cost: int list -> float list) (grid: 'a list list) =
         Dijkstra ZoneList (GraphAsMap cost grid)
 
-    let PathDictionary (cost: int -> float) (grid: 'a list list) =
+    let PathDictionary (cost: int list -> float list) (grid: 'a list list) =
         Paths cost grid |> dictionary
 
 
 
-    let Distance (cost: int -> float) (grid: 'a list list) (zone1: Zone) (zone2: Zone)
+    let Distance (cost: int list -> float list) (grid: 'a list list) (zone1: Zone) (zone2: Zone)
         (pathDictionary: ((Zone * Zone) * Zone list Option) list) =
         let map = GraphAsMap cost grid
 
@@ -378,21 +374,21 @@ module Koppen =
         |> function
             | None -> infinity
             | Some path ->
-                List.init (path.Length-1) (fun i ->
-                    map |> Map.find (path.[i], path.[i+1])
-                )
-                |> List.reduce (+)
+                if zone1 = zone2 then 0.0 else
+                    List.init (path.Length-1) (fun i ->
+                        map |> Map.find (path.[i], path.[i+1])
+                    )
+                    |> List.reduce (+)
 
-    let DistanceDictionary (cost: int -> float) (grid: 'a list list) =
+    let DistanceDictionary (cost: int list -> float list) (grid: 'a list list) =
         let pathDictionary = PathDictionary cost grid
         (fun a b -> Distance cost grid a b pathDictionary)
         |> dictionary
 
-    let Difference (cost: int -> float) (grid1: Zone Option list list) (grid2: Zone Option list list) =
+    let Difference (cost: int list -> float list) (grid1: Zone Option list list) (grid2: Zone Option list list) =
         let distanceDictionary = DistanceDictionary cost grid1
         List.init grid1.Length (fun i ->
-            List.init grid2.Length (fun j ->
-                printf "%i    %i\n" i j
+            List.init grid1.Head.Length (fun j ->
                 match grid1.[i].[j], grid2.[i].[j] with
                 | None, None -> None
                 | Some zone1, Some zone2 ->
